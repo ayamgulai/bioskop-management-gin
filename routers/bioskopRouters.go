@@ -10,7 +10,10 @@ func StartServer() *gin.Engine {
 	router := gin.Default()
 
 	router.POST("/bioskop", controllers.CreateBioskop)
-	router.GET("/showBioskop", controllers.ShowAllBioskop)
+	router.GET("/bioskop", controllers.ShowAllBioskop)
+	router.GET("/bioskop/:id", controllers.ShowBioskopByID)
+	router.PUT("/bioskop/:id", controllers.UpdateBioskop)
+	router.DELETE("/bioskop/:id", controllers.DeleteBioskop)
 
 	return router
 }

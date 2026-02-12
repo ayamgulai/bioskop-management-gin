@@ -1,14 +1,14 @@
 package main
 
 import (
-	"bioskop-management-gin/config"
+	"bioskop-management-gin/configs"
 	routers "bioskop-management-gin/routers"
 )
 
 func main() {
 	PORT := ":8080"
 
-	config.ConnectDB()
-
+	closeDB := configs.ConnectDB()
+	defer closeDB()
 	routers.StartServer().Run(PORT)
 }

@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	config "bioskop-management-gin/config"
+	config "bioskop-management-gin/configs"
 	"bioskop-management-gin/models"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +45,9 @@ func CreateBioskop(ctx *gin.Context) {
 	).Scan(&newBioskop.ID)
 
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -85,4 +87,107 @@ func ShowAllBioskop(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, bioskops)
+}
+
+func ShowBioskopByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	var bioskop models.Bioskop
+	err := config.DB.QueryRow(
+		`SELECT id, nama, lokasi, rating FROM bioskop WHERE id = $1`,
+		id,
+	).Scan(
+		&bioskop.ID,
+		&bioskop.Nama,
+		&bioskop.Lokasi,
+		&bioskop.Rating,
+	)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"error": "bioskop tidak ditemukan",
+			})
+			return
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, bioskop)
+}
+
+func UpdateBioskop(ctx *gin.Context) {
+	id := ctx.Param("id")
+	var updatedBioskop models.Bioskop
+	if err := ctx.ShouldBindJSON(&updatedBioskop); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if updatedBioskop.Nama == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "nama tidak boleh kosong",
+		})
+		return
+	}
+
+	if updatedBioskop.Lokasi == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "lokasi tidak boleh kosong",
+		})
+		return
+	}
+
+	err := config.DB.QueryRow(
+		`UPDATE bioskop SET nama = $1, lokasi = $2, rating = $3 WHERE id = $4 RETURNING id`,
+		updatedBioskop.Nama,
+		updatedBioskop.Lokasi,
+		updatedBioskop.Rating,
+		id,
+	).Scan(&updatedBioskop.ID)
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"bioskop": updatedBioskop,
+	})
+
+}
+
+func DeleteBioskop(ctx *gin.Context) {
+	id := ctx.Param("id")
+	result, err := config.DB.Exec(
+		`DELETE FROM bioskop WHERE id = $1`,
+		id,
+	)
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	if rowsAffected == 0 {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"error": "bioskop tidak ditemukan",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "bioskop berhasil dihapus",
+	})
+
 }
