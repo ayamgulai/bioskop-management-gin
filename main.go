@@ -2,6 +2,7 @@ package main
 
 import (
 	"bioskop-management-gin/configs"
+	"bioskop-management-gin/databases"
 	routers "bioskop-management-gin/routers"
 )
 
@@ -10,5 +11,7 @@ func main() {
 
 	closeDB := configs.ConnectDB()
 	defer closeDB()
+
+	databases.RunMigration()
 	routers.StartServer().Run(PORT)
 }
