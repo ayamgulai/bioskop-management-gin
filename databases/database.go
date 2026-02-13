@@ -38,6 +38,8 @@ func RunMigration() {
 		log.Println("Migration already applied:", migrationVersion)
 		return
 	}
+	pwd, _ := os.Getwd()
+	log.Println("working dir:", pwd)
 
 	// baca file migration
 	sqlBytes, err := os.ReadFile("sql_migrations/001_create_bioskop.sql")
