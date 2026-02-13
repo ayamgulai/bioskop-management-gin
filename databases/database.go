@@ -40,7 +40,7 @@ func RunMigration() {
 	}
 
 	// baca file migration
-	sqlBytes, err := os.ReadFile("migrations/001_create_bioskop.sql")
+	sqlBytes, err := os.ReadFile("sql_migrations/001_create_bioskop.sql")
 	if err != nil {
 		log.Fatal("failed to read migration file:", err)
 	}
